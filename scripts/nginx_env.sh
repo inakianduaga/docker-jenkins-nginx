@@ -6,10 +6,7 @@
 #
 
 #Variable list
-NGINX_VARIABLES=(
-    'PLACEHOLDER1'
-    'PLACEHOLDER2'
-)
+NGINX_VARIABLES=`printenv | grep 'NGINX_'`
 
 # We pass the following variables to the apache environment dynamically
 echo "" >> /etc/nginx/envvars
@@ -17,6 +14,11 @@ for i in "${NGINX_VARIABLES[@]}"
 do
   :
   # do whatever on $i
-  # http://stackoverflow.com/questions/10757380/bash-variable-variables
-  echo "set \$$i ${!i};" >> /etc/nginx/envvars
+
+  # Skip if empty
+  if [ -z "$i" ]; then
+    continue
+  fi
+
+  echo "set \$$i;" >> /etc/nginx/envvars
 done

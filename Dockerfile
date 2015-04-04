@@ -1,5 +1,3 @@
-MAINTAINER Inaki Anduaga <inaki@inakianduaga.com>
-
 # ===============================================================================
 # Jenkins Server
 #
@@ -7,10 +5,10 @@ MAINTAINER Inaki Anduaga <inaki@inakianduaga.com>
 # ===============================================================================
 
 FROM java:openjdk-7u65-jdk
+MAINTAINER Inaki Anduaga <inaki@inakianduaga.com>
 
 RUN apt-get update && \
-    apt-get install -y wget git curl zip && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get -y install wget curl supervisor
 
 ENV JENKINS_HOME /var/jenkins_home
 
@@ -51,8 +49,6 @@ RUN chown -R jenkins "$JENKINS_HOME" /usr/share/jenkins/ref
 # will be used by attached slave agents:
 EXPOSE 50000
 
-USER jenkins
-
 # from a derived Dockerfile, can use `RUN plugin.sh active.txt` to setup /usr/share/jenkins/ref/plugins from a support bundle
 COPY conf/jenkins/plugins.sh /usr/local/bin/plugins.sh
 
@@ -81,14 +77,11 @@ CMD ["/scripts/start.sh"]
 # installation
 # https://github.com/docker/docker/issues/5383
 #
-RUN \
-  sudo apt-get update && \
-  apt-get -y install software-properties-common && \
-  add-apt-repository -y ppa:nginx/stable && \
-  apt-get update && \
-  apt-get install -y nginx && \
-  #rm -rf /var/lib/apt/lists/* && \
-  chown -R www-data:www-data /var/lib/nginx
+RUN echo "deb http://nginx.org/packages/debian/ wheezy nginx" >> /etc/apt/sources.list.d/nginx.list
+RUN apt-key adv --fetch-keys "http://nginx.org/keys/nginx_signing.key"
+RUN apt-get update
+RUN apt-get -y install nginx
+RUN chown -R www-data:www-data /var/lib/nginx
 
 #
 # Configuration
@@ -121,4 +114,4 @@ ENV TERM xterm
 #
 # Text editor
 #
-RUN sudo apt-get install -y nano
+RUN apt-get install -y nano
