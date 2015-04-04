@@ -1,70 +1,48 @@
 # ===============================================================================
-# Jenkins Server
+# Jenkins Server + Docker base
 #
-# https://github.com/cloudbees/jenkins-ci.org-docker/blob/master/Dockerfile
+# https://registry.hub.docker.com/_/jenkins/
+# http://www.jayway.com/2015/03/14/docker-in-docker-with-jenkins-and-supervisord/
 # ===============================================================================
 
-FROM java:openjdk-7u65-jdk
+FROM jenkins:latest
 MAINTAINER Inaki Anduaga <inaki@inakianduaga.com>
 
-RUN apt-get update && \
-    apt-get -y install wget curl supervisor
+# Switch user to root so that we can install apps (jenkins image switches to user "jenkins" in the end)
+USER root
 
+# Install Docker prerequisites
+RUN apt-get update -qq && apt-get install -qqy \
+    apt-transport-https \
+    ca-certificates \
+	lxc \
+	supervisor
+
+# Create log folder for supervisor, jenkins and docker
+RUN mkdir -p /var/log/supervisor
+RUN mkdir -p /var/log/docker
+RUN mkdir -p /var/log/jenkins
+
+# Install Docker from Docker Inc. repositories.
+RUN echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list \
+  && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9 \
+  && apt-get update -qq \
+  && apt-get install -qqy lxc-docker
+
+# Add jenkins user to the docker groups so that the jenkins user can run docker without sudo
+RUN gpasswd -a jenkins docker
+
+# Install the magic wrapper from DIND to run docker inside docker
+# https://github.com/jpetazzo/dind
+#ADD ./wrapdocker /usr/local/bin/wrapdocker
+#RUN chmod +x /usr/local/bin/wrapdocker
+
+# More jenkins configuration
 ENV JENKINS_HOME /var/jenkins_home
-
-#
-# Flag commands as non-interactive
-#
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Jenkins is ran with user `jenkins`, uid = 1000
-# If you bind mount a volume from host/volume from a data container,
-# ensure you use same uid
-RUN useradd -d "$JENKINS_HOME" -u 1000 -m -s /bin/bash jenkins
 
 # Jenkins home directoy is a volume, so configuration and build history
 # can be persisted and survive image upgrades
 VOLUME /var/jenkins_home
-
-# `/usr/share/jenkins/ref/` contains all reference configuration we want
-# to set on a fresh new installation. Use it to bundle additional plugins
-# or config file with your custom jenkins Docker image.
-RUN mkdir -p /usr/share/jenkins/ref/init.groovy.d
-
-COPY conf/jenkins/init.groovy /usr/share/jenkins/ref/init.groovy.d/tcp-slave-angent-port.groovy
-
-ENV JENKINS_VERSION 1.596.1
-
-# could use ADD but this one does not check Last-Modified header
-# see https://github.com/docker/docker/issues/8331
-RUN curl -L http://mirrors.jenkins-ci.org/war-stable/1.596.1/jenkins.war -o /usr/share/jenkins/jenkins.war
-
-ENV JENKINS_UC https://updates.jenkins-ci.org
-RUN chown -R jenkins "$JENKINS_HOME" /usr/share/jenkins/ref
-
-# Update: We'll proxy it through nginx
-# for main web interface:
-# EXPOSE 8080
-
-# will be used by attached slave agents:
-EXPOSE 50000
-
-# from a derived Dockerfile, can use `RUN plugin.sh active.txt` to setup /usr/share/jenkins/ref/plugins from a support bundle
-COPY conf/jenkins/plugins.sh /usr/local/bin/plugins.sh
-
-
-# ===============================================================================
-# Startup / Supervisor
-# ===============================================================================
-#
-# Supervisor startup scripts (also includes nginx)
-#
-ADD conf/supervisor/ /etc/supervisor/conf.d/
-ADD scripts/ /scripts/
-RUN chmod 755 /scripts/*.sh
-
-# Default command
-CMD ["/scripts/start.sh"]
 
 
 # ===============================================================================
@@ -100,6 +78,20 @@ COPY conf/nginx/certificates /etc/nginx
 
 # Expose ports nginx listens to
 EXPOSE 80 443
+
+
+# ===============================================================================
+# Startup / Supervisor
+# ===============================================================================
+#
+# Supervisor startup scripts (also includes nginx)
+#
+ADD conf/supervisor/ /etc/supervisor/conf.d/
+ADD scripts/ /scripts/
+RUN chmod 755 /scripts/*.sh
+
+# Default command
+CMD ["/scripts/start.sh"]
 
 
 # ===============================================================================
