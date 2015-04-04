@@ -1,0 +1,6 @@
+# =================================
+# Environment variables
+# =================================
+#
+# placeholder - Will be autopopulated by the build script
+# Include this file into any server directive that needs env. variables access

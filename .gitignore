@@ -1,0 +1,10 @@
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm
+*.iml
+.idea/
+
+# Don't commit nginx https certificates
+conf/nginx/certificates/*
+
+#Keep special .gitkeep file, useful for tracking (yet) empty directories
+#http://stackoverflow.com/questions/8024924/gitignore-ignore-all-files-then-recursively-allow-foo
+!.gitkeep
