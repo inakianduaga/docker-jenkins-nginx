@@ -24,18 +24,14 @@ RUN mkdir -p /var/log/docker
 RUN mkdir -p /var/log/jenkins
 
 # Install Docker from Docker Inc. repositories.
+# We also need app-armor dependency: http://www.tekhead.org/blog/2014/09/installing-docker-on-ubuntu-quick-fix/
 RUN echo deb https://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list \
   && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9 \
   && apt-get update -qq \
-  && apt-get install -qqy lxc-docker
+  && apt-get install -qqy lxc-docker apparmor
 
 # Add jenkins user to the docker groups so that the jenkins user can run docker without sudo
 RUN gpasswd -a jenkins docker
-
-# Install the magic wrapper from DIND to run docker inside docker
-# https://github.com/jpetazzo/dind
-#ADD ./wrapdocker /usr/local/bin/wrapdocker
-#RUN chmod +x /usr/local/bin/wrapdocker
 
 # More jenkins configuration
 ENV JENKINS_HOME /var/jenkins_home
