@@ -36,8 +36,8 @@ where -t is the tag name we give the container
 
 To enable DIND, we need to run the container in privileged mode. To run the container, execute
 
-`docker run --privileged --dns 8.8.8.8 -d -p 80:80 -p 443:443 -v ~/jenkins_home:/var/jenkins_home --env-file ~/.jenkins_env --name jenkins-nginx jenkins-nginx`
+`docker run --privileged --dns 8.8.8.8 -d -p 80:80 -p 443:443 -v ~/jenkins_home:/var/jenkins_home --name jenkins-nginx jenkins-nginx`
 
 - `-p` here is binding to the usual 80/443 ports
 - `-v` param maps internal jenkins_home volume to a folder on host.
-- `--env-file` sources the environment variables from the provided file
+
