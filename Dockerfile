@@ -55,7 +55,7 @@ RUN echo "deb http://nginx.org/packages/debian/ wheezy nginx" >> /etc/apt/source
 RUN apt-key adv --fetch-keys "http://nginx.org/keys/nginx_signing.key"
 RUN apt-get update
 RUN apt-get -y install nginx
-RUN chown -R www-data:www-data /var/lib/nginx
+RUN chown -R www-data:www-data /etc/nginx
 
 #
 # Configuration
